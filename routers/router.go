@@ -20,6 +20,7 @@ func InitRouter() *gin.Engine {
 	router.GET("queryDbInfo", QueryDbInfo)
 	router.GET("querySomeCols", GetSomeCols)
 	router.POST("login", UserLogin)
+	router.POST("register",UserReg)
 	//router.Use(Cors())
 	return router
 }

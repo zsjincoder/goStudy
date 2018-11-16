@@ -1,7 +1,7 @@
 package controller
 
 import (
-	. "../models"
+	. "../models/user"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -33,8 +33,8 @@ func GetUser(c *gin.Context) {
   *func:查询user表全部信息
   *param:
  */
-func GetUsers(c *gin.Context)  {
-	user:= GetAllUser()
+func GetUsers(c *gin.Context) {
+	user := GetAllUser()
 	if user == nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": true, "data": "",
@@ -52,15 +52,15 @@ func GetUsers(c *gin.Context)  {
   *func:查询数据库信息
   *param:
  */
-func QueryDbInfo(c *gin.Context)  {
+func QueryDbInfo(c *gin.Context) {
 	info := GetDbMates()
-	if info !=nil{
-		c.JSON(http.StatusOK,gin.H{
-			"info":info,
+	if info != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"info": info,
 		})
-	}else {
-		c.JSON(http.StatusOK,gin.H{
-			"info":nil,
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"info": nil,
 		})
 	}
 }
@@ -75,13 +75,13 @@ func GetSomeCols(c *gin.Context) {
 	info := GetSomeColsInUser
 	fmt.Println(reflect.TypeOf(info))
 	if info == nil {
-		c.JSON(http.StatusOK,gin.H{
-			"msg":"数据库查询内如为空!",
+		c.JSON(http.StatusOK, gin.H{
+			"msg": "数据库查询内如为空!",
 		})
-	}else {
-		c.JSONP(http.StatusOK,gin.H{
-			"msg":"操作成功",
-			"data":info,
+	} else {
+		c.JSONP(http.StatusOK, gin.H{
+			"msg":  "操作成功",
+			"data": info,
 		})
 	}
 }
@@ -93,32 +93,73 @@ func GetSomeCols(c *gin.Context) {
   *param:
  */
 type UserInfo struct {
-	UserName string
-	Password string
+	Id      string `json:"id" form:"id"`
+	Name    string `json:"name" form:"name"`
+	Pwd     string `json:"pwd" form:"pwd"`
+	Sex     int    `json:"sex" form:"sex"`
+	OldYear int    `json:"oldYear" form:"oldYear"`
+	Birth   string `json:"birth" form:"birth"`
 }
- func UserLogin (c *gin.Context){
- 	var userInfo UserInfo
- 	err := c.ShouldBindJSON(&userInfo)
- 	fmt.Println(&userInfo)
-	 if err != nil {
-		 c.JSON(http.StatusOK,gin.H{
-		 	"err":"服务器内部错误!",
-		 })
-	 }else {
-	 	user :=userInfo.UserName
-	 	pwd := userInfo.Password
-	 	isExist := JudgeLogin(user,pwd)
-		 if isExist{
-			 c.JSON(http.StatusOK,gin.H{
-				 "msg":"操作成功!",
-				 "data":"请尽情享受吧!",
-			 })
-		 }else {
-			 c.JSON(http.StatusOK,gin.H{
-				 "msg":"操作失败!",
-				 "data":"用户名密码错误!请检查!",
-			 })
-		 }
-	 }
 
- }
+func UserLogin(c *gin.Context) {
+	//var userInfo UserInfo
+	//err := c.ShouldBindJSON(&userInfo)
+	name := c.PostForm("userName")
+	pwd := c.PostForm("password")
+	if name == "" || pwd == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"err": "服务器内部错误!",
+		})
+	} else {
+		//name := userInfo.UserName
+		//pwd := userInfo.Password
+		isExist, needReg := JudgeLogin(name, pwd)
+		if isExist && needReg == 1 {
+			c.JSON(http.StatusOK, gin.H{
+				"Tips": "操作成功!",
+				"msg":  "请尽情享受吧!",
+				"data": "toLogin",
+			})
+		} else if isExist && needReg == 0 {
+			c.JSON(http.StatusOK, gin.H{
+				"Tips": "操作成功!",
+				"msg":  "用户名不存在，请前去注册",
+				"data": "toRegister",
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"Tips": "操作失败!",
+				"msg":  "服务器内部错误!",
+			})
+		}
+	}
+
+}
+
+/**
+  *2018/11/16
+  *author:xiaoC
+  *func:用户注册
+  *param:
+ */
+func UserReg(c *gin.Context)  {
+	var userInfo User
+	err:=c.ShouldBindJSON(&userInfo)
+	if err != nil {
+
+	}else {
+		isSC :=UserRegister(userInfo)
+		fmt.Println(&userInfo)
+		if isSC{
+			c.JSON(http.StatusOK, gin.H{
+				"Tips": "操作成功!",
+				"msg":  "注册成功!",
+			})
+		}else {
+			c.JSON(http.StatusOK, gin.H{
+				"Tips": "操作失败!",
+				"msg":  "服务器内部错误!",
+			})
+		}
+	}
+}
