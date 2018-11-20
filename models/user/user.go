@@ -13,7 +13,7 @@ type User struct {
 	Name    string `json:"name" form:"name"`
 	Pwd     string `json:"pwd" form:"pwd"`
 	Sex     int    `json:"sex" form:"sex"`
-	OldYear int    `json:"old_year" form:"oldYear"`
+	OldYear int    `json:"oldYear" form:"old_year"`
 	Birth   string `json:"birth" form:"birth"`
 }
 
@@ -84,14 +84,18 @@ func JudgeLogin(username string, pwd string) (b bool, i int) {
 	return true, 1
 }
 
-func UserRegister(param User)(b bool) {
+func UserRegister(param User)(b bool,str string) {
 	var user User
 	user.Id = MakeMD5(param.Name)
 	user.Name=param.Name
 	user.Pwd=param.Pwd
 	user.OldYear=param.OldYear
 	has,err := db.Orm.Insert(&user)
-	fmt.Println(has)
-	fmt.Println(err)
-	return false
+	if has == 0 {
+		return false, "该用户已经注册!请不要重复操作"
+	}
+	if err != nil {
+		return false,"系统错误!请稍后再试"
+	}
+	return true,"注册成功请登陆!"
 }

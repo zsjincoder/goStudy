@@ -3,60 +3,53 @@ package routers
 import (
 	. "../controller"
 	"fmt"
+	"github.com/fwhezfwhez/jwt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"net/http"
-	"strings"
 )
 
 func InitRouter() *gin.Engine {
 	router := gin.Default()
 	config := cors.DefaultConfig()
-	config.AllowAllOrigins=true
+	config.AllowAllOrigins = true
 	router.Use(cors.New(config))
-	//router.Use(cors.Default())
+	router.POST("login", UserLogin)
+	router.Use(Validate())
+	router.POST("register", UserReg)
 	router.GET("getUser", GetUser)
 	router.GET("getAllUsers", GetUsers)
 	router.GET("queryDbInfo", QueryDbInfo)
 	router.GET("querySomeCols", GetSomeCols)
-	router.POST("login", UserLogin)
-	router.POST("register",UserReg)
-	//router.Use(Cors())
 	return router
 }
-func Cors() gin.HandlerFunc {
+
+func Validate() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		method := c.Request.Method
-
-		origin := c.Request.Header.Get("Origin")
-		var headerKeys []string
-		for k, _ := range c.Request.Header {
-			headerKeys = append(headerKeys, k)
-		}
-		headerStr := strings.Join(headerKeys, ", ")
-		if headerStr != "" {
-			headerStr = fmt.Sprintf("access-control-allow-origin, access-control-allow-headers, %s", headerStr)
+		if JWTToken := c.Request.Header.Get("x-auth-token"); JWTToken != "" {
+			token := jwt.GetToken()
+			legal, err := token.IsLegal(JWTToken, "1932019050")
+			if err != nil {
+				fmt.Println(err)
+				c.Abort()
+				c.JSON(200, gin.H{
+					"data":"响应令牌验证错误",
+				})
+				return
+			}
+			if !legal {
+				c.Abort()
+				c.JSON(200, gin.H{
+					"data":"响应令牌验证错误",
+				})
+				return
+			}
+			c.Next()
 		} else {
-			headerStr = "access-control-allow-origin, access-control-allow-headers"
+			c.JSON(200, gin.H{
+				"data":"未找到令牌",
+			})
+			c.Abort()
+			return
 		}
-		if origin != "" {
-			//下面的都是乱添加的-_-~
-			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-			c.Header("Access-Control-Allow-Origin", "*")
-			c.Header("Access-Control-Allow-Headers", headerStr)
-			c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-			// c.Header("Access-Control-Allow-Headers", "Authorization, Content-Length, X-CSRF-Token, Accept, Origin, Host, Connection, Accept-Encoding, Accept-Language,DNT, X-CustomHeader, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Content-Type, Pragma")
-			c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
-			// c.Header("Access-Control-Max-Age", "172800")
-			c.Header("Access-Control-Allow-Credentials", "true")
-			c.Set("content-type", "application/json")
-		}
-
-		//放行所有OPTIONS方法
-		if method == "OPTIONS" {
-			c.JSON(http.StatusOK, "Options Request!")
-		}
-
-		c.Next()
 	}
 }

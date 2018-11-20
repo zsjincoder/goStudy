@@ -13,6 +13,6 @@ import (
  */
 func MakeMD5(str string) string  {
 	h := md5.New()
-	h.Write([]byte(str))
+	h.Write([]byte(str+"kmkn,mkjbjbhbbj"))
 	return hex.EncodeToString(h.Sum(nil))
 }

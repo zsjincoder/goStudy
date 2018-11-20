@@ -3,17 +3,23 @@ package controller
 import (
 	. "../models/user"
 	"fmt"
+	"github.com/fwhezfwhez/jwt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"reflect"
+	"strconv"
+	"time"
 )
 
 /**
-  *2018/11/15
-  *author:xiaoC
-  *func:查询一条信息
-  *param:
+  @time:2018/11/15
+  @author:xiaoC
+  @func:查询一条信息
+  @param:
  */
+
+var secretKey = "1932019050"
+
 func GetUser(c *gin.Context) {
 	user := GetUserByOne()
 	if user == nil {
@@ -115,19 +121,36 @@ func UserLogin(c *gin.Context) {
 		//pwd := userInfo.Password
 		isExist, needReg := JudgeLogin(name, pwd)
 		if isExist && needReg == 1 {
+			//获取token管理对象
+			token := jwt.GetToken()
+			//添加令牌关键信息
+			token.AddPayLoad("userName", name).AddPayLoad("role", "admin").AddHeader("typ", "JWT").AddHeader("alg", "HS256")
+			//添加令牌期限
+			exp := time.Now().Add(1 * time.Hour)
+			token.AddPayLoad("exp", strconv.FormatInt(exp.Unix(), 10))
+			//获取令牌，并添加进reponse的header里
+			jwts, _, erre := token.JwtGenerator(secretKey)
+			if erre != nil {
+				fmt.Println("token生成出错")
+				return
+			}
+			c.Writer.Header().Add("x-auth-token", jwts)
 			c.JSON(http.StatusOK, gin.H{
-				"Tips": "操作成功!",
-				"msg":  "请尽情享受吧!",
-				"data": "toLogin",
+				"Tips":      "操作成功!",
+				"msg":       "请尽情享受吧!",
+				"data":      "toLogin",
+				"areYouReg": true,
+				"token":     jwts,
 			})
 		} else if isExist && needReg == 0 {
 			c.JSON(http.StatusOK, gin.H{
-				"Tips": "操作成功!",
-				"msg":  "用户名不存在，请前去注册",
-				"data": "toRegister",
+				"Tips":      "操作成功!",
+				"msg":       "用户名不存在，请前去注册",
+				"data":      "toRegister",
+				"areYouReg": false,
 			})
 		} else {
-			c.JSON(http.StatusOK, gin.H{
+			c.JSON(http.StatusInternalServerError, gin.H{
 				"Tips": "操作失败!",
 				"msg":  "服务器内部错误!",
 			})
@@ -142,23 +165,25 @@ func UserLogin(c *gin.Context) {
   *func:用户注册
   *param:
  */
-func UserReg(c *gin.Context)  {
+func UserReg(c *gin.Context) {
 	var userInfo User
-	err:=c.ShouldBindJSON(&userInfo)
+	err := c.ShouldBindJSON(&userInfo)
 	if err != nil {
-
-	}else {
-		isSC :=UserRegister(userInfo)
 		fmt.Println(&userInfo)
-		if isSC{
+	} else {
+		isSC, s := UserRegister(userInfo)
+		fmt.Println(&userInfo)
+		if isSC {
 			c.JSON(http.StatusOK, gin.H{
-				"Tips": "操作成功!",
-				"msg":  "注册成功!",
+				"Tips":    "操作成功!",
+				"success": true,
+				"msg":     s,
 			})
-		}else {
+		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"Tips": "操作失败!",
-				"msg":  "服务器内部错误!",
+				"Tips":    "操作失败!",
+				"success": false,
+				"msg":     s,
 			})
 		}
 	}

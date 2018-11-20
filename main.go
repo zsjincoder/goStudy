@@ -1,12 +1,13 @@
 package main
 
 import (
-	db "./database"
+	coon "./database"
 	router "./routers"
 )
 
 func main() {
-	defer db.Orm.Clone()
+	defer coon.Orm.Clone()
+	defer coon.Db.Close()
 	routers := router.InitRouter()
 	routers.Run(":8081")
 }
