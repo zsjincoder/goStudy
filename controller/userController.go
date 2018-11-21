@@ -119,7 +119,7 @@ func UserLogin(c *gin.Context) {
 	} else {
 		//name := userInfo.UserName
 		//pwd := userInfo.Password
-		isExist, needReg := JudgeLogin(name, pwd)
+		isExist, needReg,u := JudgeLogin(name, pwd)
 		if isExist && needReg == 1 {
 			//获取token管理对象
 			token := jwt.GetToken()
@@ -137,14 +137,17 @@ func UserLogin(c *gin.Context) {
 			c.Writer.Header().Add("x-auth-token", jwts)
 			c.JSON(http.StatusOK, gin.H{
 				"Tips":      "操作成功!",
+				"code":200,
 				"msg":       "请尽情享受吧!",
 				"data":      "toLogin",
 				"areYouReg": true,
 				"token":     jwts,
+				"user":u,
 			})
 		} else if isExist && needReg == 0 {
 			c.JSON(http.StatusOK, gin.H{
 				"Tips":      "操作成功!",
+				"code":200,
 				"msg":       "用户名不存在，请前去注册",
 				"data":      "toRegister",
 				"areYouReg": false,
@@ -152,6 +155,7 @@ func UserLogin(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"Tips": "操作失败!",
+				"code":501,
 				"msg":  "服务器内部错误!",
 			})
 		}
@@ -173,15 +177,18 @@ func UserReg(c *gin.Context) {
 	} else {
 		isSC, s := UserRegister(userInfo)
 		fmt.Println(&userInfo)
+		fmt.Println(isSC)
 		if isSC {
 			c.JSON(http.StatusOK, gin.H{
 				"Tips":    "操作成功!",
+				"code":200,
 				"success": true,
 				"msg":     s,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
 				"Tips":    "操作失败!",
+				"code":200,
 				"success": false,
 				"msg":     s,
 			})

@@ -71,17 +71,17 @@ func GetSomeColsInUser() (u []User) {
 	}
 }
 
-func JudgeLogin(username string, pwd string) (b bool, i int) {
+func JudgeLogin(username string, pwd string) (b bool, i int,u *User) {
 	var user User
 	has, err := db.Orm.Where("name = ? and pwd = ?", username, pwd).Get(&user)
 	fmt.Println(err)
 	if err != nil {
-		return false, 0
+		return false, 0,nil
 	}
 	if has == false {
-		return false, 1
+		return false, 1,nil
 	}
-	return true, 1
+	return true, 1,&user
 }
 
 func UserRegister(param User)(b bool,str string) {
@@ -90,6 +90,8 @@ func UserRegister(param User)(b bool,str string) {
 	user.Name=param.Name
 	user.Pwd=param.Pwd
 	user.OldYear=param.OldYear
+	user.Sex=param.Sex
+	user.Birth=param.Birth
 	has,err := db.Orm.Insert(&user)
 	if has == 0 {
 		return false, "该用户已经注册!请不要重复操作"
