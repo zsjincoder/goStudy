@@ -6,7 +6,7 @@ import (
 )
 
 /**
-  *2018/11/16
+  *@2018/11/16
   *author:xiaoC
   *func:生成md5加盐字符串
   *param:string string
